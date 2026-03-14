@@ -3,4 +3,19 @@
     "folder": "tradablegreen",
     "image": "tradablegreen//TradableGreen.png"
   }
+,
+  {
+    "folder": "tradablegreen1",
+    "image": "tradablegreen1//TradableGreen.png"
+  }
+,
+  {
+    "folder": "two",
+    "image": "two//logo.jpeg"
+  }
+,
+  {
+    "folder": "two2",
+    "image": "two2//logo.jpeg"
+  }
 ]
