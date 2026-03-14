@@ -1,0 +1,55 @@
+name: Generate Sponsors JSON
+
+on:
+  push:
+    paths:
+      - 'sponsors/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Generate sponsors.json
+        run: |
+
+          echo "[" > sponsors.json
+
+          first=true
+
+          for folder in sponsors/*
+          do
+
+            if [ -d "$folder" ]; then
+
+              image=$(ls "$folder"/*.{jpg,jpeg,png,webp,gif} 2>/dev/null | head -n 1)
+
+              name=$(basename "$folder")
+
+              if [ "$first" = true ]; then
+                first=false
+              else
+                echo "," >> sponsors.json
+              fi
+
+              echo "  {" >> sponsors.json
+              echo "    \"folder\": \"$name\"," >> sponsors.json
+              echo "    \"image\": \"$image\"" >> sponsors.json
+              echo "  }" >> sponsors.json
+
+            fi
+
+          done
+
+          echo "]" >> sponsors.json
+
+      - name: Commit file
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add sponsors.json
+          git commit -m "Auto update sponsors.json" || echo "No changes"
+          git push
