@@ -1,67 +1,46 @@
-name: Generate Sponsors JSON
+- name: Generate sponsors.json
+  run: |
+    shopt -s nullglob
 
-on:
-  push:
-    paths:
-      - '**'
+    echo "[" > sponsors.json
+    first=true
 
-jobs:
-  build:
-    runs-on: ubuntu-latest
+    for folder in */
+    do
+      # skip system folders
+      if [[ "$folder" == ".github/" ]]; then
+        continue
+      fi
 
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      name=$(basename "$folder")
 
-      - name: Generate sponsors.json
-        run: |
-          echo "[" > sponsors.json
-          first=true
+      # collect images safely
+      images=("$folder"/*.jpg "$folder"/*.jpeg "$folder"/*.png "$folder"/*.webp "$folder"/*.gif)
 
-          for folder in */
-          do
-            # skip system folders
-            if [[ "$folder" == ".github/" ]]; then
-              continue
-            fi
+      image_count=${#images[@]}
 
-            name=$(basename "$folder")
+      # default empty image
+      image=""
 
-            # get all matching images into array
-            images=($(ls "$folder"/*.{jpg,jpeg,png,webp,gif} 2>/dev/null))
+      if [ "$image_count" -eq 1 ]; then
+        image="${images[0]}"
+      elif [ "$image_count" -gt 1 ]; then
+        echo "⚠️ Warning: Multiple images found in $folder. Skipping images."
+      else
+        echo "ℹ️ No image found in $folder."
+      fi
 
-            image_count=${#images[@]}
+      if [ "$first" = true ]; then
+        first=false
+      else
+        echo "," >> sponsors.json
+      fi
 
-            # default empty image
-            image=""
+      echo "  {" >> sponsors.json
+      echo "    \"folder\": \"$name\"," >> sponsors.json
+      echo "    \"image\": \"$image\"" >> sponsors.json
+      echo "  }" >> sponsors.json
 
-            if [ "$image_count" -eq 1 ]; then
-              image="${images[0]}"
-            elif [ "$image_count" -gt 1 ]; then
-              echo "⚠️ Warning: Multiple images found in $folder. Skipping images."
-            else
-              echo "ℹ️ No image found in $folder."
-            fi
+    done
 
-            if [ "$first" = true ]; then
-              first=false
-            else
-              echo "," >> sponsors.json
-            fi
-
-            echo "  {" >> sponsors.json
-            echo "    \"folder\": \"$name\"," >> sponsors.json
-            echo "    \"image\": \"$image\"" >> sponsors.json
-            echo "  }" >> sponsors.json
-
-          done
-
-          echo "]" >> sponsors.json
-
-      - name: Commit sponsors.json
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          git add sponsors.json
-          git commit -m "Auto update sponsors.json" || echo "No changes"
-          git push
+    echo "]" >> sponsors.json
