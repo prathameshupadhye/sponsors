@@ -1,46 +1,57 @@
-- name: Generate sponsors.json
-  run: |
-    shopt -s nullglob
+name: Generate Sponsors JSON
 
-    echo "[" > sponsors.json
-    first=true
+on:
+  push:
+    paths:
+      - '**'
 
-    for folder in */
-    do
-      # skip system folders
-      if [[ "$folder" == ".github/" ]]; then
-        continue
-      fi
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-      name=$(basename "$folder")
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-      # collect images safely
-      images=("$folder"/*.jpg "$folder"/*.jpeg "$folder"/*.png "$folder"/*.webp "$folder"/*.gif)
+      - name: Generate sponsors.json
+        run: |
+          echo "[" > sponsors.json
+          first=true
 
-      image_count=${#images[@]}
+          for folder in */
+          do
+            # skip system folders
+            if [[ "$folder" == ".github/" ]]; then
+              continue
+            fi
 
-      # default empty image
-      image=""
+            name=$(basename "$folder")
 
-      if [ "$image_count" -eq 1 ]; then
-        image="${images[0]}"
-      elif [ "$image_count" -gt 1 ]; then
-        echo "⚠️ Warning: Multiple images found in $folder. Skipping images."
-      else
-        echo "ℹ️ No image found in $folder."
-      fi
+            image=$(ls "$folder"/*.{jpg,jpeg,png,webp,gif} 2>/dev/null | head -n 1)
 
-      if [ "$first" = true ]; then
-        first=false
-      else
-        echo "," >> sponsors.json
-      fi
+            if [ -z "$image" ]; then
+              continue
+            fi
 
-      echo "  {" >> sponsors.json
-      echo "    \"folder\": \"$name\"," >> sponsors.json
-      echo "    \"image\": \"$image\"" >> sponsors.json
-      echo "  }" >> sponsors.json
+            if [ "$first" = true ]; then
+              first=false
+            else
+              echo "," >> sponsors.json
+            fi
 
-    done
+            echo "  {" >> sponsors.json
+            echo "    \"folder\": \"$name\"," >> sponsors.json
+            echo "    \"image\": \"$image\"" >> sponsors.json
+            echo "  }" >> sponsors.json
 
-    echo "]" >> sponsors.json
+          done
+
+          echo "]" >> sponsors.json
+
+      - name: Commit sponsors.json
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add sponsors.json
+          git commit -m "Auto update sponsors.json" || echo "No changes"
+          git push
