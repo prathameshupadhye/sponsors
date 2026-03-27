@@ -5,6 +5,11 @@
   }
 ,
   {
+    "folder": "tradablegreen1",
+    "image": "tradablegreen1//logo.png"
+  }
+,
+  {
     "folder": "two",
     "image": "two//logo.jpeg"
   }
